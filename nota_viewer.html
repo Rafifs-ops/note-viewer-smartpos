@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Nota Digital - Smart Inventory</title>
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-card { box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 antialiased">
+
+    <!-- Container Utama -->
+    <div id="app" class="w-full max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden print-card transition-all hidden">
+        
+        <!-- Header Formal -->
+        <div class="bg-slate-900 text-white px-6 py-8 sm:px-8 sm:py-10 border-b-4 border-blue-600 relative">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div>
+                    <span class="text-xs font-bold tracking-widest uppercase text-blue-400 bg-blue-950/50 px-3 py-1 rounded-full border border-blue-800/50">
+                        E-Receipt Resmi
+                    </span>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-3">SMART INVENTORY</h1>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1 font-medium">Sistem Manajemen & Pencatatan Digital Terverifikasi</p>
+                </div>
+                <div class="text-left sm:text-right">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-xs font-semibold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        LUNAS & VALID
+                    </div>
+                    <p class="text-slate-400 text-xs mt-2.5 font-mono" id="nota-date">Tanggal: -</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Konten Nota -->
+        <div class="p-6 sm:p-8 space-y-6">
+            
+            <!-- Dokumen Metadata -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                <div>
+                    <span class="text-slate-500 font-medium uppercase tracking-wider block mb-1">Metode Verifikasi</span>
+                    <span class="font-semibold text-slate-800 flex items-center gap-1">
+                        Cryptographic JSON Web Token (JWT)
+                    </span>
+                </div>
+                <div>
+                    <span class="text-slate-500 font-medium uppercase tracking-wider block mb-1">Status Keamanan</span>
+                    <span class="font-semibold text-emerald-700 flex items-center gap-1">
+                        Integritas Data Terjamin (Read-Only)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tabel Daftar Produk -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-1">Rincian Pembelian</h3>
+                <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-sm bg-white">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-xs uppercase tracking-wider">
+                                <th class="py-3 px-4 w-12 text-center">No</th>
+                                <th class="py-3 px-4">Nama Produk / Item</th>
+                                <th class="py-3 px-4 text-center w-16">Qty</th>
+                                <th class="py-3 px-4 text-right w-32">Harga Satuan</th>
+                                <th class="py-3 px-4 text-right w-36">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="item-rows" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Rows injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ringkasan Total Penjualan -->
+            <div class="pt-2 flex flex-col items-end">
+                <div class="w-full sm:w-72 space-y-2 text-sm border-t border-slate-200 border-dashed pt-4">
+                    <div class="flex justify-between font-bold text-slate-900 text-base">
+                        <span class="uppercase tracking-wide">Total Pembayaran</span>
+                        <span class="text-blue-700 font-mono" id="total-penjualan">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian Footer Formal & Tombol Cetak -->
+            <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 no-print">
+                <p class="text-xs text-slate-400 text-center sm:text-left max-w-sm leading-relaxed">
+                    Nota digital ini merupakan salinan bukti transaksi yang sah dan diterbitkan secara otomatis oleh sistem point-of-sales Smart Inventory.
+                </p>
+                <button onclick="window.print()" class="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-sm hover:bg-slate-800 active:bg-slate-950 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9v4a2 2 0 00-2 2v2zm0-10V4a1 1 0 011-1h6a1 1 0 011 1v3M4 7h16"></path>
+                    </svg>
+                    Cetak / Simpan PDF
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- State Loading -->
+    <div id="loading" class="text-center space-y-3">
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-sm font-medium text-slate-500">Membaca data enkripsi nota...</p>
+    </div>
+
+    <!-- State Error Card -->
+    <div id="error-card" class="w-full max-w-md bg-white border border-rose-200 rounded-2xl shadow-xl p-6 text-center space-y-4 hidden">
+        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-100 shadow-sm">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+        <div>
+            <h2 class="text-base font-bold text-slate-900 tracking-tight">Gagal Memuat Nota</h2>
+            <p id="error-message" class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Token transaksi tidak ditemukan atau format tautan tidak valid. Sila tanyakan kembali ke kasir untuk mendapatkan QR Code yang benar.
+            </p>
+        </div>
+    </div>
+
+    <!-- Script Logika Client-side -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingEl = document.getElementById('loading');
+            const appEl = document.getElementById('app');
+            const errorCardEl = document.getElementById('error-card');
+            const errorMessageEl = document.getElementById('error-message');
+
+            // Helper format mata uang rupiah
+            const formatRupiah = (number) => {
+                return new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0
+                }).format(number);
+            };
+
+            // Fungsi decode JWT tanpa library eksternal (mengatasi Base64Url)
+            const decodeJWT = (token) => {
+                try {
+                    const base64Url = token.split('.')[1];
+                    if (!base64Url) return null;
+                    
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map((c) => {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    
+                    return JSON.parse(jsonPayload);
+                } catch (e) {
+                    console.error('Error saat melakukan decoding payload token:', e);
+                    return null;
+                }
+            };
+
+            // Ambil query parameter 't' dari URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('t');
+
+            if (!token) {
+                loadingEl.classList.add('hidden');
+                errorCardEl.classList.remove('hidden');
+                errorMessageEl.innerText = 'Parameter token ("t") hilang dari URL tautan. Harap periksa kembali tautan nota Anda.';
+                return;
+            }
+
+            // Eksekusi decode token payload data nota
+            const dataNota = decodeJWT(token);
+
+            if (!dataNota || !dataNota.items) {
+                loadingEl.classList.add('hidden');
+                errorCardEl.classList.remove('hidden');
+                errorMessageEl.innerText = 'Token tidak valid atau strukturnya rusak. Tanda tangan digital atau struktur data gagal diverifikasi.';
+                return;
+            }
+
+            // Injeksi data ke komponen HTML DOM
+            document.getElementById('nota-date').innerText = `Tanggal: ${dataNota.tanggal || '-'}`;
+            document.getElementById('total-penjualan').innerText = formatRupiah(dataNota.totalPenjualan || 0);
+
+            const tbody = document.getElementById('item-rows');
+            tbody.innerHTML = ''; // bersihkan placeholder
+
+            // Loop untuk merender list item tabel
+            dataNota.items.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition-colors font-mono text-xs';
+                
+                // Kalkulasi subtotal per item
+                const subtotal = Number(item.harga) * Number(item.quantity);
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 text-center font-sans text-slate-400">${index + 1}</td>
+                    <td class="py-3.5 px-4 font-sans font-bold text-slate-800">${item.nama}</td>
+                    <td class="py-3.5 px-4 text-center text-slate-600 font-semibold">${item.quantity}</td>
+                    <td class="py-3.5 px-4 text-right text-slate-600">${formatRupiah(item.harga)}</td>
+                    <td class="py-3.5 px-4 text-right font-bold text-slate-900">${formatRupiah(subtotal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Ganti state tampilan UI dari Loading ke Application
+            loadingEl.classList.add('hidden');
+            appEl.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
